@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>かんたん会計（文化祭版・スタティック）</title>
+  <title>かんたん会計（文化祭版・スタティック改良）</title>
   <style>
     :root {
       --bg: #f7f7fb;
@@ -20,11 +20,12 @@
     header { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; }
     h1 { font-size: 22px; margin: 0; }
     .card { background: var(--card); border-radius: 16px; box-shadow: 0 6px 20px rgba(0,0,0,.06); padding: 16px; }
-    .items { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .btn { display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 12px;
+    .group { display: flex; gap: 12px; margin-bottom: 12px; }
+    .btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 12px;
            padding: 20px; font-weight: 700; font-size: 20px; cursor: pointer; background: #eef2ff; user-select: none;
-           width: 100%; height: 100px; }
+           height: 100px; }
     .btn .price { font-size: 16px; font-weight: 600; color: var(--muted); }
+    .btn.smallFont { font-size: 18px; }
     .right { display: grid; gap: 16px; grid-template-rows: auto 1fr auto; }
     .list { max-height: 300px; overflow: auto; font-size: 14px; }
     table { width: 100%; border-collapse: collapse; }
@@ -39,26 +40,22 @@
     .danger { background: var(--danger); color: #fff; }
     .ok { background: var(--ok); color: #fff; font-size: 18px; padding: 16px 24px; }
     .muted { background: #e5e7eb; }
-    .pill { border-radius: 999px; padding: 2px 8px; border: 1px solid #ccc; background: #fff; font-size: 12px; }
-    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .small { font-size: 12px; color: var(--muted); }
-    @media (max-width: 900px) { .container { grid-template-columns: 1fr; } .items { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 480px) { .items { grid-template-columns: 1fr; } }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 900px) { .container { grid-template-columns: 1fr; } .group { flex-direction: column; } }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>かんたん会計（文化祭版・スタティック）</h1>
+      <h1>かんたん会計（文化祭版・スタティック改良）</h1>
       <div class="actions">
         <button class="actionBtn ok" id="downloadCsv">CSVダウンロード</button>
       </div>
     </header>
 
     <!-- 左側 商品ボタン -->
-    <section class="card">
-      <div class="items" id="items"></div>
-    </section>
+    <section class="card" id="items"></section>
 
     <!-- 右側 会計エリア -->
     <section class="right">
@@ -86,14 +83,19 @@
   </div>
 
   <script>
-    const itemsData = [
-      {id:'A', name:'ベリールージュ', price:160},
-      {id:'B', name:'ラグーンブルー', price:160},<br>
-      {id:'C', name:'レインボー', price:270},
-      {id:'D', name:'クッキー＆クリーム', price:270},
-      {id:'E', name:'ハニーコットン', price:270},<br>
-      {id:'F', name:'チュロス', price:220},
-      {id:'G', name:'唐揚げ', price:120}
+    const itemsData = {
+      BR: {id:'BR', name:'ベリールージュ', price:160, small:true},
+      LB: {id:'LB', name:'ラグーンブルー', price:160, small:true},
+      RB: {id:'RB', name:'レインボー', price:270},
+      CC: {id:'CC', name:'クッキー＆クリーム', price:270},
+      HC: {id:'HC', name:'ハニーコットン', price:270, small:true},
+      CH: {id:'CH', name:'チュロス', price:220},
+      KA: {id:'KA', name:'唐揚げ', price:120}
+    };
+    const itemGroups = [
+      ['BR','LB'],
+      ['RB','CC','HC'],
+      ['CH','KA']
     ];
 
     let cart = [];
@@ -101,12 +103,18 @@
     function renderItems(){
       const wrap=document.getElementById('items');
       wrap.innerHTML='';
-      itemsData.forEach(it=>{
-        const btn=document.createElement('button');
-        btn.className='btn';
-        btn.innerHTML=`<div>${it.name}</div><div class="price">${yen(it.price)}</div>`;
-        btn.onclick=()=>addToCart(it);
-        wrap.appendChild(btn);
+      itemGroups.forEach(groupIds=>{
+        const group=document.createElement('div');
+        group.className='group';
+        groupIds.forEach(id=>{
+          const it=itemsData[id];
+          const btn=document.createElement('button');
+          btn.className='btn'+(it.small?' smallFont':'');
+          btn.innerHTML=`<div>${it.name}</div><div class="price">${yen(it.price)}</div>`;
+          btn.onclick=()=>addToCart(it);
+          group.appendChild(btn);
+        });
+        wrap.appendChild(group);
       });
     }
     function addToCart(it){
